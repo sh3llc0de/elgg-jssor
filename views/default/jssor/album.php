@@ -169,7 +169,7 @@ either expressed or implied, of the FreeBSD Project.
 		$Loop: 0,
 
                 $DragOrientation: 3,                                //[Optional] Orientation to drag slide, 0 no drag, 1 horizental, 2 vertical, 3 either, default value is 1 (Note that the $DragOrientation should be the same as $PlayOrientation when $DisplayPieces is greater than 1, or parking position is not 0)
-                $ArrowKeyNavigation: true,   			            //[Optional] Allows keyboard (arrow key) navigation or not, default value is false
+                $ArrowKeyNavigation: false,   			            //[Optional] Allows keyboard (arrow key) navigation or not, default value is false
                 $SlideDuration: 800,                                //Specifies default duration (swipe) for slide in milliseconds
 
                 $SlideshowOptions: {                                //[Optional] Options to specify and enable slideshow or not
@@ -208,6 +208,7 @@ either expressed or implied, of the FreeBSD Project.
 	    }
 
 	    slider_create();
+
 	    //responsive code begin
             //you can remove responsive code if you don't want the slider scales while window resizes
             $(window).bind("load", slider_scale);
@@ -245,8 +246,6 @@ either expressed or implied, of the FreeBSD Project.
 	}
 
 	function slider_update_ui() {
-	    update_map_button();
-
 	    if ($( "#map_container" ).dialog( "isOpen" )) {
 		slider_map_center();
 	    }
@@ -254,6 +253,7 @@ either expressed or implied, of the FreeBSD Project.
 	    if ($( "#photo_info" ).dialog( "isOpen" ) ) {
 		slider_update_photo_info();
 	    }
+
 	    var cur_photo = slider_offset + jssor_slider1.$CurrentIndex() + 1;
 	    $( "#slider" ).slider( "value", slider_offset );
 	    $( "#amount" ).val( cur_photo );
@@ -261,16 +261,19 @@ either expressed or implied, of the FreeBSD Project.
 
 	    var captured = slider_photo.attr("captured");
 	    if (captured) {
-		$( "#photo_captured" ).html( " ::: " + elgg.echo('jssor:captured') + ": " + captured );
+		$( "#photo_captured" ).html( captured );
 	    } else {
 		$( "#photo_captured" ).empty();
 	    }
+
+	    $("html, body").animate({ scrollTop: $("#pinfo_button").offset().top }, 0);
 	}
 
 	function slider_create() {
 	    jssor_slider1 = new $JssorSlider$("slider1_container", options);
 
 	    jssor_slider1.$On($JssorSlider$.$EVT_SLIDESHOW_END, function(slideIndex) {
+		//console.log('EVT_SLIDESHOW_END ' + slideIndex);
 		var count = jssor_slider1.$SlidesCount() - 1;
 		if (slideIndex == count) {
 		    if ((slider_offset + slider_limit) < slider_total) {
@@ -280,18 +283,14 @@ either expressed or implied, of the FreeBSD Project.
 		}
 	    });
 
-	    jssor_slider1.$On($JssorSlider$.$EVT_SLIDESHOW_START, function(slideIndex) {
-		slider_photo = $("#photoinfo" + slideIndex);
-		slider_update_ui();
-	    });
-
 	    jssor_slider1.$On($JssorSlider$.$EVT_PARK, function(slideIndex) {
+		//console.log('EVT_SLIDESHOW_END ' + slideIndex);
 		slider_photo = $("#photoinfo" + slideIndex);
 		slider_update_ui();
 	    });
 	}
 
-	function slider_update(auto_play) {
+	function slider_update(auto_play,move,index) {
 	    elgg.get('ajax/view/jssor/gallery?guid=' + <?php echo get_input('guid'); ?>, {
 		data: {
 		    user_guid: elgg.session.user.guid, // querystring
@@ -300,6 +299,7 @@ either expressed or implied, of the FreeBSD Project.
 		    disable_captions: slider_disable_captions,
 		},
 		success: function (output) {
+		    jssor_slider1 = null;
 		    $('#slider1_container').remove();
 		    $('#gallery').html(output);
 		    slider_create();
@@ -308,7 +308,13 @@ either expressed or implied, of the FreeBSD Project.
 			jssor_slider1.$Play();
 		    }
 		    update_map_markers();
-		    slider_update_ui();
+		    if (move) {
+			var tmp = jssor_slider1.$SlidesCount() - 1;
+			if (index >= 0) tmp = index;
+			slider_go_to(tmp);
+		    } else {
+			slider_update_ui();
+		    }
 		}
 	    });
 	}
@@ -325,7 +331,7 @@ either expressed or implied, of the FreeBSD Project.
 	    if (!slider_offset) return;
 		slider_offset -= slider_limit;
 	    if (slider_offset < 0) slider_offset = 0;
-	    slider_update(false);
+	    slider_update(false, true, -1);
 	}
 
 	function slider_fullscreen() {
@@ -345,6 +351,11 @@ either expressed or implied, of the FreeBSD Project.
 	    });
 	}
 
+	function slider_go_to(index) {
+	    jssor_slider1.$PlayTo(index);
+	    slider_photo = $("#photoinfo" + index);
+	}
+
 	function update_map_markers() {
 	    if (!slider_settings.enable_google_maps) return;
 	    for (var i = 0; i < slider_markers.length; i++) {
@@ -357,8 +368,8 @@ either expressed or implied, of the FreeBSD Project.
 		var lat = parseFloat(p.attr('latitude'));
 		var lng = parseFloat(p.attr('longitude'));
 		var title = p.attr('title');
-		var text = "<b>" + title + "</b><br/>"
-		text += "<img src=\"" + p.attr('thumb') + "\">";
+		var text = "<a onclick=\"slider_go_to(" + i + ")\"><b>" + title + "</b><br/>"
+		text += "<img src=\"" + p.attr('thumb') + "\"></a>";
 		if (lat && lng) {
 		    var marker = new google.maps.Marker({
 			position: new google.maps.LatLng(lat, lng),
@@ -368,6 +379,11 @@ either expressed or implied, of the FreeBSD Project.
 		    set_map_maker_text(marker, text);
 		    slider_markers.push(marker);
 		}
+	    }
+	    if (slider_markers && slider_markers.length) {
+		$("#map_button").show();
+	    } else {
+		$("#map_button").hide();
 	    }
 	}
 
@@ -387,37 +403,27 @@ either expressed or implied, of the FreeBSD Project.
 	    var lng = parseFloat(slider_photo.attr('longitude'));
 	    if (slider_map && lat && lng) {
 		slider_map.setCenter(new google.maps.LatLng(lat, lng));
+	    } else if (slider_map && slider_markers && slider_markers.length) {
+		slider_map.setCenter(slider_markers[0].getPosition());
 	    }
 	}
 
 	function initMap() {
 		if (!slider_settings.enable_google_maps) return;
 		if (!slider_map) {
-		    var lat = parseFloat(slider_photo.attr('latitude'));
-		    var lng = parseFloat(slider_photo.attr('longitude'));
-		    if (!lat) lat = -34.397;
-		    if (!lng) lng = 150.644;
 		    var mapCanvas = document.getElementById('map_canvas');
 		    var mapOptions = {
-			center: new google.maps.LatLng(lat, lng),
+			center: new google.maps.LatLng(-34.397, 150.644),
 			zoom: 13,
 			mapTypeId: google.maps.MapTypeId.ROADMAP
 		    }
 		    slider_map = new google.maps.Map(mapCanvas, mapOptions);
+		    update_map_markers();
 		}
-		update_map_markers();
 	}
 
-	function update_map_button() {
-	    if (slider_settings.enable_google_maps) {
-		if (slider_photo.attr('latitude') && slider_photo.attr('longitude')) {
-		    $("#map_button").show();
-		} else {
-		    $("#map_button").hide();
-		}
-	    } else {
-		$("#map_button").hide();
-	    }
+	function scrollTo(hash) {
+	    location.hash = "#" + hash;
 	}
 
 	$(function() {
@@ -455,6 +461,7 @@ either expressed or implied, of the FreeBSD Project.
 		$( "#map_button" ).click(function() {
 		    $( "#map_container" ).dialog( "open" );
 		    initMap();
+		    slider_map_center();
 		});
 	    } else {
 		$("#map_button").hide();
@@ -479,12 +486,45 @@ either expressed or implied, of the FreeBSD Project.
 	    if (slider_settings.enable_captions) {
 		$( "#captions_box" ).change(function() {
 		    slider_disable_captions = $('#captions_box').prop('checked');
-		    slider_update(jssor_slider1.$IsAutoPlaying());
+		    var index = jssor_slider1.$CurrentIndex();
+		    slider_update(jssor_slider1.$IsAutoPlaying(), true, index);
 		});
 	    } else {
 		$( "#captions_disable" ).hide();
 		$( "#captions_box" ).hide();
 	    }
+
+	    $(document).keydown(function(e) {
+		var count = jssor_slider1.$SlidesCount() - 1;
+		var index = jssor_slider1.$CurrentIndex();
+
+		switch (e.which) {
+		    case $.ui.keyCode.RIGHT:
+			if (index == count) {
+			    slider_next();
+			} else {
+			    slider_go_to(index+1);
+			}
+			break;
+		    case $.ui.keyCode.LEFT:
+			if (index == 0) {
+			    slider_prev();
+			} else {
+			    slider_go_to(index-1);
+			}
+		        break;
+		    case $.ui.keyCode.SPACE:
+			if (index == count) {
+			    slider_next();
+			} else {
+			    slider_go_to(index+1);
+			}
+			break;
+		}
+		e.preventDefault();
+	    });
+
+	    slider_update_ui();
 	});
     </script>
 
@@ -495,6 +535,10 @@ either expressed or implied, of the FreeBSD Project.
 ?>
 </div> <!-- gallery -->
 <div id="controls">
+<?php echo elgg_echo("jssor:photos"); ?>:
+<input type="text" id="amount" readonly style="align:right; width:100px; border:0; color:#f6931f; font-weight:bold;">
+<span id="total_photos">/0</span> ::: <?php echo elgg_echo('jssor:captured'); ?>: <span id="photo_captured"></span>
+<div id="slider"></div>
 <button type="button" onclick="jssor_slider1.$Play()"><?php echo elgg_echo("jssor:play"); ?></button>
 <button type="button" onclick="jssor_slider1.$Pause()"><?php echo elgg_echo("jssor:pause"); ?></button>
 <button type="button" onclick="slider_prev()"><?php echo elgg_echo("jssor:prev"); ?></button>
@@ -503,10 +547,7 @@ either expressed or implied, of the FreeBSD Project.
 <button id="map_button" type="button"><?php echo elgg_echo("jssor:googlemaps"); ?></button>
 <button id="pinfo_button" type="button"><?php echo elgg_echo("jssor:photo:info"); ?></button>
 <input id="captions_box" type="checkbox" value='1'><span id="captions_disable"><?php echo elgg_echo("jssor:disable:captions"); ?></span>
-<div id="slider"></div>
-<?php echo elgg_echo("jssor:photos"); ?>:
-<input type="text" id="amount" readonly style="align:right; width:100px; border:0; color:#f6931f; font-weight:bold;">
-<span id="total_photos">/0</span><span id="photo_captured"></span>
+
 </div> <!-- controls -->
 <div id="map_container">
 <style>
