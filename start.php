@@ -31,11 +31,9 @@ either expressed or implied, of the FreeBSD Project.
 elgg_register_event_handler('init', 'system', 'jssor_init');
 
 function jssor_init() {
-	#elgg_register_simplecache_view('js/jssor/jssor.js');
-	#elgg_register_simplecache_view('js/jssor/jssor.slider.js');
-
 	elgg_register_simplecache_view('js/jssor/settings.js');
 	elgg_register_simplecache_view('js/jssor/gallery.js');
+	elgg_register_simplecache_view('js/jssor/comments.js');
 
 	elgg_register_page_handler('jssor', 'jssor_page_handler');
 	#elgg_register_css('jssor', 'mod/jssor/css/jssor.css');
@@ -57,6 +55,7 @@ function jssor_page_handler($page) {
 
     elgg_require_js('jssor/settings');
     elgg_require_js('jssor/gallery');
+    elgg_require_js('jssor/comments');
     #elgg_load_css('jssor');
     #elgg_require_js('jssor/jssor');
     #elgg_require_js('jssor/jssor.slider');
