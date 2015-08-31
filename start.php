@@ -33,13 +33,13 @@ elgg_register_event_handler('init', 'system', 'jssor_init');
 function jssor_init() {
 	elgg_register_simplecache_view('js/jssor/settings.js');
 	elgg_register_simplecache_view('js/jssor/gallery.js');
-	elgg_register_simplecache_view('js/jssor/comments.js');
 
 	elgg_register_page_handler('jssor', 'jssor_page_handler');
 	#elgg_register_css('jssor', 'mod/jssor/css/jssor.css');
 
 	elgg_register_ajax_view('jssor/gallery');
 	elgg_register_ajax_view('jssor/pinfo');
+	elgg_register_ajax_view('jssor/comments');
 
 	elgg_register_plugin_hook_handler('register', 'menu:entity', 'jssor_entity_menu_setup');
 	elgg_extend_view('object/album', 'jssor/album_extend');
@@ -50,22 +50,14 @@ function jssor_init() {
 
 function jssor_page_handler($page) {
     if (!isset($page[0])) {
-	return false;
+		return false;
     }
 
-    elgg_require_js('jssor/settings');
-    elgg_require_js('jssor/gallery');
-    elgg_require_js('jssor/comments');
-    #elgg_load_css('jssor');
-    #elgg_require_js('jssor/jssor');
-    #elgg_require_js('jssor/jssor.slider');
-
-
     if ($page[0] == 'album') {
+		elgg_require_js('jssor/settings');
+		elgg_require_js('jssor/gallery');
 	    include elgg_get_plugins_path() . 'jssor/pages/jssor/album.php';
 	    return true;
-    } else if ($page[0] == 'edit') {
-	forward('photos/edit/' . $page[1]);
     }
 
     return false;

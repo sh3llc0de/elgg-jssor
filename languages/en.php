@@ -46,6 +46,7 @@ return array(
 	'jssor:settings:enable_captions' => 'Enable captions?',
 	'jssor:settings:enable_google_maps' => 'Enable google maps?',
 	'jssor:photo:info' => 'Photo Info',
+	'jssor:photo:edit' => 'Photo Edit',
 	'jssor:disable:captions' => 'Disable Captions',
 	'jssor:captured' => 'Date Taken',
 

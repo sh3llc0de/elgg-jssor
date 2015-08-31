@@ -57,14 +57,16 @@ define("jssor/gallery", function(require) {
     var elgg = require("elgg");
     var $ = require("jquery");
 
+	/*
 	(function(){
 		var callback = function(){},
 			callbackName = 'gmapscallback'+(new Date()).getTime();
 		window[callbackName] = callback;
-		define(['http://maps.googleapis.com/maps/api/js?sensor=true&callback=' + callbackName], function(){
+		define(['https://maps.googleapis.com/maps/api/js?callback=' + callbackName], function(){
 			return google.maps;
 		});
 	})();
+	*/
 
 	slider_guid = parseInt($( "#gallery" ).attr("guid"));
     slider_limit = parseInt($( "#gallery" ).attr("limit"));
@@ -176,7 +178,7 @@ define("jssor/gallery", function(require) {
 		options = {
 			$AutoPlay: false,                                    //[Optional] Whether to auto play, to enable slideshow, this option must be set to true, default value is false
 			$AutoPlayInterval: 1500,                            //[Optional] Interval (in milliseconds) to go for next slide since the previous stopped if the slider is auto playing, default value is 3000
-			$PauseOnHover: 1,                                //[Optional] Whether to pause when mouse over if a slider is auto playing, 0 no pause, 1 pause for desktop, 2 pause for touch device, 3 pause for desktop and touch device, 4 freeze for desktop, 8 freeze for touch device, 12 freeze for desktop and touch device, default value is 1
+			$PauseOnHover: 0,                                //[Optional] Whether to pause when mouse over if a slider is auto playing, 0 no pause, 1 pause for desktop, 2 pause for touch device, 3 pause for desktop and touch device, 4 freeze for desktop, 8 freeze for touch device, 12 freeze for desktop and touch device, default value is 1
 			$FillMode: 1,
 			$Loop: 0,
 
@@ -292,6 +294,8 @@ define("jssor/gallery", function(require) {
 			slider_photo = $("#photoinfo" + slideIndex);
 			slider_update_ui();
 	    });
+
+		slider_scale();
 	}
 
 	function slider_update(auto_play,move,index) {
@@ -345,16 +349,121 @@ define("jssor/gallery", function(require) {
 	    $('#fullscreen').fullscreen();
 	}
 
+	function comments_set_delete() {
+		$('#comments li.elgg-item-object-comment').each(function() {
+			var $c = $(this);
+			var $guid = $($c).attr('id').replace("elgg-object-","");
+			$c.find('.elgg-menu-item-delete').html("<span class=\"elgg-icon-delete elgg-icon\"></span>");
+			$c.find('.elgg-menu-item-delete span').click(function(event) {
+				var r = confirm(elgg.echo('deleteconfirm'));
+				if (r == true) {
+					//console.log("delete comment");
+					elgg.action('comment/delete', {
+						data: {
+							guid: $guid,
+						},
+						success: function (wrapper) {
+							//console.log('delete status: ' + wrapper.status);
+							if (wrapper.status == 0) {
+								comments_update();
+							}
+						}
+					});
+				}
+			});
+		});
+	}
+
+	function comments_update() {
+		elgg.get('ajax/view/jssor/comments', {
+			data: {
+				guid: slider_photo.attr('guid'),
+			},
+			success: function (output) {
+				$('#comments').html(output);
+				//console.log('comments updated');
+				comments_set_delete();
+			}
+	    });
+
+	}
+
 	function slider_update_photo_info() {
 	    elgg.get('ajax/view/jssor/pinfo', {
-		data: {
-		    user_guid: elgg.session.user.guid, // querystring
-		    guid: slider_photo.attr('guid'),
-		},
-		success: function (output) {
-		    $('#photo_canvas').html(output);
-		    $('#photo_info').dialog( "option", "title", slider_photo.attr('title') );
-		}
+			data: {
+				user_guid: elgg.session.user.guid, // querystring
+				guid: slider_photo.attr('guid'),
+			},
+			success: function (output) {
+				$('#photo_canvas').html(output);
+				// photo delete
+				$('#photo_canvas li.elgg-menu-item-delete').html("<span class=\"elgg-icon-delete elgg-icon\"></span>");
+				$('#photo_canvas li.elgg-menu-item-delete span').click(function(event) {
+					var r = confirm(elgg.echo('deleteconfirm'));
+					if (r == true) {
+						elgg.action('photos/delete', {
+							data: {
+								guid: slider_photo.attr('guid'),
+							},
+							success: function (wrapper) {
+								//console.log('save status: ' + wrapper.status);
+								if (wrapper.status == 0) {
+									slider_update(false,true,jssor_slider1.$CurrentIndex());
+								}
+							}
+						});
+					}
+				});
+
+				// photo edit
+				$('#photo_canvas li.elgg-menu-item-edit').html("<span class=\"elgg-menu-content\">Edit</span>");
+				$('#photo_canvas li.elgg-menu-item-edit span').click(function(event) {
+					$('#editphoto').toggle();
+				});
+				$('#editphoto form').submit(function(event) {
+					var $form = $(this);
+					var $index = jssor_slider1.$CurrentIndex();
+					event.preventDefault();
+					elgg.action('photos/image/save', {
+						data: {
+							guid: slider_photo.attr('guid'),
+							title: $form.find('input[name=title]').val(),
+							description: $form.find('textarea[name=description]').val(),
+							tags: $form.find('input[name=tags]').val(),
+						},
+						success: function (wrapper) {
+							//console.log("edit photo updated status: " + wrapper.status);
+							if (wrapper.status == 0) {
+								console.log($index);
+								slider_update(false,true,$index);
+							}
+						}
+					});
+				});
+
+				// comments
+				$('#photo_info').dialog( "option", "title", slider_photo.attr('title') );
+				$('#comments_container form').submit(function(event) {
+					var $form = $(this);
+					var $comment = $form.find('textarea[name=generic_comment]');
+					//console.log("add new comment: " + $comment.val());
+					event.preventDefault();
+					elgg.action('comment/save', {
+						data: {
+							entity_guid: slider_photo.attr('guid'),
+							generic_comment: $comment.val(),
+						},
+						success: function (wrapper) {
+							//console.log('save status: ' + wrapper.status);
+							if (wrapper.status == 0) {
+								$comment.val('');
+								comments_update();
+							}
+						}
+					});
+				});
+				comments_set_delete();
+			}
 	    });
 	}
 
@@ -479,6 +588,7 @@ define("jssor/gallery", function(require) {
 			maxHeight: 480,
 			maxWidth: 640,
 			title: "Photo Info",
+			modal: false,
 	    });
 
 	    $( "#pinfo_button" ).click(function() {
@@ -497,7 +607,7 @@ define("jssor/gallery", function(require) {
 			$( "#captions_box" ).hide();
 	    }
 
-	    $(document).keydown(function(e) {
+	    $('#gallery').keydown(function(e) {
 			var count = jssor_slider1.$SlidesCount() - 1;
 			var index = jssor_slider1.$CurrentIndex();
 

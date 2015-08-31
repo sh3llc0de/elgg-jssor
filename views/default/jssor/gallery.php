@@ -40,6 +40,7 @@ if ($album) {
 
 	$images = $album->getImages($limit, $offset);
 }
+
 ?>
     <!-- Caption Style -->
     <style>
@@ -79,6 +80,7 @@ if ($album) {
             background: url(../img/browser-icons.png);
         }
     </style>
+
     <!-- Jssor Slider Begin -->
     <!-- To move inline styles to css file/block, please specify a class name for each element. --> 
     <div id="slider1_container" style="position: relative; top: 0px; left: 0px; width: 800px;
@@ -103,7 +105,6 @@ if ($album) {
 	}
 
 	echo $html;
-
 ?>
         </div>
         <!--#region Arrow Navigator Skin Begin -->
@@ -224,7 +225,7 @@ if ($album) {
                     border: #000 2px solid;
                 }
 
-                * html .jssort01 .c, * html .jssort01 .pdn .c, * html .jssort01 .pav .c {
+                .jssort01 .c, .jssort01 .pdn .c, .jssort01 .pav .c {
                     /* ie quirks mode adjust */
                     width /**/: 72px;
                     height /**/: 72px;

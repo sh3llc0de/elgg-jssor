@@ -79,6 +79,11 @@ $metadata = elgg_view_menu('entity', array(
 		));
 echo $metadata;
 echo "<br/>";
+echo "<div id=\"editphoto\" style=\"padding: 5px; border: 2px dashed red; display:none;\">";
+$form_vars = tidypics_prepare_form_vars($photo);
+echo elgg_view_form('photos/image/save', array('method' => 'post'), $form_vars);
+echo "</div>";
+echo elgg_view('photos/tagging/tags', array( 'entity' => $photo));
 echo $summary;
 
 if ($photo->description) {
@@ -88,6 +93,21 @@ if ($photo->description) {
 	));
 }
 
-echo elgg_view_comments($photo);
+// Comments
+$attr = [
+	'id' => 'comments_container',
+	'class' => (array) elgg_extract('class', $vars, []),
+];
+$attr['class'][] = 'elgg-comments';
 
+// work around for deprecation code in elgg_view()
+unset($vars['internalid']);
+
+$comments = "<div id=\"comments\">";
+$comments .= elgg_view('jssor/comments', array('guid' => $guid));
+$comments .= "</div>";
+
+$comments .= elgg_view_form('comment/save', array(), $vars);
+
+echo elgg_format_element('div', $attr, $comments);
 

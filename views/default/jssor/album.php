@@ -49,19 +49,36 @@ if (isset($image)) {
 }
 if (!$offset) $offset = 0;
 $limit = 10;
+
+$settings = elgg_get_plugin_from_id('jssor')->getAllSettings();
+$settings = [
+	'enable_captions' => elgg_extract('enable_captions', $settings),
+	'enable_google_maps' => elgg_extract('enable_google_maps', $settings),
+];
+
 ?>
 <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+<?php
+    if ($settings[enable_google_maps]) {
+       echo "<script src=\"https://maps.googleapis.com/maps/api/js\"></script>";
+    }
+?>
 <script>
 _g = null;
 require(['jssor/gallery'], function(g){
     _g = g;
 });
 </script>
+<style>
+*:focus {
+    outline: none;
+}
+</style>
 
 <div id="fullscreen">
-<div id="gallery" guid="<?php echo $guid; ?>" offset="<?php echo $offset; ?>" limit="<?php echo $limit; ?>" total="<?php echo $album->getSize(); ?>"">
+<div id="gallery" tabindex="1" guid="<?php echo $guid; ?>" offset="<?php echo $offset; ?>" limit="<?php echo $limit; ?>" total="<?php echo $album->getSize(); ?>"">
 <?php
-    echo elgg_view('jssor/gallery', array( 'guid' => $guid, 'limit' => $limit, 'offset' => $offset));
+   echo elgg_view('jssor/gallery', array( 'guid' => $guid, 'limit' => $limit, 'offset' => $offset));
 ?>
 </div> <!-- gallery -->
 <div id="controls">
@@ -69,13 +86,15 @@ require(['jssor/gallery'], function(g){
 <input type="text" id="amount" readonly style="align:right; width:100px; border:0; color:#f6931f; font-weight:bold;">
 <span id="total_photos">/0</span> ::: <?php echo elgg_echo('jssor:captured'); ?>: <span id="photo_captured"></span>
 <div id="slider"></div>
-<button onclick="_g.play()"><?php echo elgg_echo("jssor:play"); ?></button>
-<button onclick="_g.pause()"><?php echo elgg_echo("jssor:pause"); ?></button>
-<button onclick="_g.prev()"><?php echo elgg_echo("jssor:prev"); ?></button>
-<button onclick="_g.next()"><?php echo elgg_echo("jssor:next"); ?></button>
-<button id="fs_button" onclick="_g.fullscreen()"><?php echo elgg_echo("jssor:fullscreen"); ?></button>
-<button id="map_button"><?php echo elgg_echo("jssor:googlemaps"); ?></button>
-<button id="pinfo_button"><?php echo elgg_echo("jssor:photo:info"); ?></button>
+<?php
+	echo elgg_view('input/button', array( 'onclick' => '_g.play()', 'value' => elgg_echo("jssor:play")));
+	echo elgg_view('input/button', array( 'onclick' => '_g.pause()', 'value' => elgg_echo("jssor:pause")));
+	echo elgg_view('input/button', array( 'onclick' => '_g.prev()', 'value' => elgg_echo("jssor:prev")));
+	echo elgg_view('input/button', array( 'onclick' => '_g.next()', 'value' => elgg_echo("jssor:next")));
+	echo elgg_view('input/button', array( 'id' => 'fs_button', 'onclick' => '_g.fullscreen()', 'value' => elgg_echo("jssor:fullscreen")));
+	echo elgg_view('input/button', array( 'id' => 'map_button', 'value' => elgg_echo("jssor:googlemaps")));
+	echo elgg_view('input/button', array( 'id' => 'pinfo_button', 'value' => elgg_echo("jssor:photo:info")));
+?>
 <input id="captions_box" type="checkbox" value='1'><span id="captions_disable"><?php echo elgg_echo("jssor:disable:captions"); ?></span>
 
 </div> <!-- controls -->
@@ -98,5 +117,4 @@ require(['jssor/gallery'], function(g){
 <div id="photo_canvas"></div>
 </div> <!-- photo_info -->
 </div> <!-- fullscreen -->
-
 
