@@ -87,13 +87,13 @@ require(['jssor/gallery'], function(g){
 <span id="total_photos">/0</span> ::: <?php echo elgg_echo('jssor:captured'); ?>: <span id="photo_captured"></span>
 <div id="slider"></div>
 <?php
-	echo elgg_view('input/button', array( 'onclick' => '_g.play()', 'value' => elgg_echo("jssor:play")));
-	echo elgg_view('input/button', array( 'onclick' => '_g.pause()', 'value' => elgg_echo("jssor:pause")));
-	echo elgg_view('input/button', array( 'onclick' => '_g.prev()', 'value' => elgg_echo("jssor:prev")));
-	echo elgg_view('input/button', array( 'onclick' => '_g.next()', 'value' => elgg_echo("jssor:next")));
-	echo elgg_view('input/button', array( 'id' => 'fs_button', 'onclick' => '_g.fullscreen()', 'value' => elgg_echo("jssor:fullscreen")));
-	echo elgg_view('input/button', array( 'id' => 'map_button', 'value' => elgg_echo("jssor:googlemaps")));
-	echo elgg_view('input/button', array( 'id' => 'pinfo_button', 'value' => elgg_echo("jssor:photo:info")));
+	echo elgg_view('input/button', array( 'onclick' => '_g.play()', 'class' => 'elgg-button-action', 'value' => elgg_echo("jssor:play")));
+	echo elgg_view('input/button', array( 'onclick' => '_g.pause()', 'class' => 'elgg-button-action', 'value' => elgg_echo("jssor:pause")));
+	echo elgg_view('input/button', array( 'onclick' => '_g.prev()', 'class' => 'elgg-button-action', 'value' => elgg_echo("jssor:prev")));
+	echo elgg_view('input/button', array( 'onclick' => '_g.next()', 'class' => 'elgg-button-action', 'value' => elgg_echo("jssor:next")));
+	echo elgg_view('input/button', array( 'id' => 'fs_button', 'class' => 'elgg-button-action', 'onclick' => '_g.fullscreen()', 'value' => elgg_echo("jssor:fullscreen")));
+	echo elgg_view('input/button', array( 'id' => 'map_button', 'class' => 'elgg-button-action', 'value' => elgg_echo("jssor:googlemaps")));
+	echo elgg_view('input/button', array( 'id' => 'pinfo_button', 'class' => 'elgg-button-action', 'value' => elgg_echo("jssor:photo:info")));
 ?>
 <input id="captions_box" type="checkbox" value='1'><span id="captions_disable"><?php echo elgg_echo("jssor:disable:captions"); ?></span>
 

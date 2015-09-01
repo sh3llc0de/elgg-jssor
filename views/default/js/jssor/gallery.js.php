@@ -272,7 +272,7 @@ define("jssor/gallery", function(require) {
 			$( "#photo_captured" ).empty();
 	    }
 
-	    $("html, body").animate({ scrollTop: $("#pinfo_button").offset().top }, 0);
+	    $("html, body").animate({ scrollTop: $("#gallery").offset().top }, 0);
 	}
 
 	function slider_create() {
