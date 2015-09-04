@@ -77,6 +77,7 @@ define("jssor/gallery", function(require) {
 	slider_map = null;
 	slider_markers = [];
 	slider_disable_captions = false;
+	slider_comments_offset = 0;
 
 	slider_settings = <?php echo json_encode($settings); ?>;
 	for (var key in slider_settings) {
@@ -374,21 +375,43 @@ define("jssor/gallery", function(require) {
 		});
 	}
 
+	function comments_set_pagination() {
+		$( '#comments ul.elgg-pagination li a' ).click(function(e) {
+			e.preventDefault();
+			//console.log(e.target.href);
+			var re = /coffset=(\d*)/;
+			var match = re.exec(e.target.href);
+			//console.log(match);
+			if (match) {
+				slider_comments_offset = match[1];
+			} else {
+				slider_comments_offset = 0;
+			}
+			//console.log(slider_comments_offset);
+			comments_update();
+			$( '#photo_info' ).scrollTop("0");
+		});
+	}
+
 	function comments_update() {
 		elgg.get('ajax/view/jssor/comments', {
 			data: {
 				guid: slider_photo.attr('guid'),
+				offset: slider_comments_offset,
 			},
 			success: function (output) {
 				$('#comments').html(output);
 				//console.log('comments updated');
+				//console.log(slider_comments_offset);
 				comments_set_delete();
+				comments_set_pagination();
 			}
 	    });
 
 	}
 
 	function slider_update_photo_info() {
+		slider_comments_offset = 0;
 	    elgg.get('ajax/view/jssor/pinfo', {
 			data: {
 				user_guid: elgg.session.user.guid, // querystring
@@ -463,6 +486,7 @@ define("jssor/gallery", function(require) {
 					});
 				});
 				comments_set_delete();
+				comments_set_pagination();
 			}
 	    });
 	}

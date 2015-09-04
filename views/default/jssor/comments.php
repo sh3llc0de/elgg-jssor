@@ -1,5 +1,6 @@
 <?php
 
+$offset = elgg_extract('offset', $vars, get_input('offset', 0));
 $limit = elgg_extract('limit', $vars, get_input('limit', 0));
 if (!$limit) {
 	$limit = elgg_trigger_plugin_hook('config', 'comments_per_page', [], 25);
@@ -14,6 +15,8 @@ $content = elgg_list_entities(array(
 	'limit' => $limit,
 	'preload_owners' => true,
 	'distinct' => false,
+	'offset_key' => 'coffset',
+	'offset' => $offset,
 	'url_fragment' => 'comments_container',
 ));
 
