@@ -16,7 +16,8 @@ echo "${VER_REV}" > version.txt
 git add version.txt
 git commit -m "pkg tag ${VER_MAJOR}.${VER_MINOR}.${VER_REV}"
 git tag "${VER_MAJOR}.${VER_MINOR}.${VER_REV}"
-git push --all --tags
+git push --all
+git push --tags
 
 cd "${PKG_PATH}"
 zip -r "/tmp/jssor-${VER_MAJOR}.${VER_MINOR}.${VER_REV}.zip" jssor
