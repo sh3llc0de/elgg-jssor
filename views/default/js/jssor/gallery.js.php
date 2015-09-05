@@ -47,8 +47,8 @@ foreach ($files as $file) {
 
 $settings = elgg_get_plugin_from_id('jssor')->getAllSettings();
 $settings = [
-	'enable_captions' => elgg_extract('enable_captions', $settings),
-	'enable_google_maps' => elgg_extract('enable_google_maps', $settings),
+	'enable_captions' => elgg_extract('enable_captions', $settings, true),
+	'enable_google_maps' => elgg_extract('enable_google_maps', $settings, true),
 ];
 
 ?>
@@ -222,6 +222,125 @@ define("jssor/gallery", function(require) {
 	        };
 	    }
 
+		$( "#slider" ).slider({
+			range: "min",
+			min: 0,
+			max: slider_total - 1,
+			value: slider_offset,
+			slide: function( event, ui ) {
+				$( "#amount" ).val( ui.value );
+			},
+			stop: function(event, ui) {
+				slider_offset = ui.value;
+				slider_update(false);
+			}
+	    });
+	    $( "#total_photos" ).html( "/ " + slider_total );
+
+	    if (!$.fullscreen.isNativelySupported()) {
+			$("#fs_button").hide();
+	    }
+
+		$( "#map_container" ).dialog({
+			autoOpen: false,
+			height: 460,
+			width: 530,
+			minHeight: 460,
+			minWidth: 530,
+			maxHeight: 480,
+			maxWidth: 640,
+			title: "Google Maps",
+		});
+
+	    if (slider_settings.enable_google_maps) {
+			$( "#map_button" ).click(function() {
+				$( "#map_container" ).dialog( "open" );
+				initMap();
+				slider_map_center();
+			});
+	    } else {
+			$("#map_button").hide();
+	    }
+
+	    $( "#photo_info" ).dialog({
+			autoOpen: false,
+			height: 460,
+			width: 530,
+			minHeight: 460,
+			minWidth: 530,
+			maxHeight: 480,
+			maxWidth: 640,
+			title: "Photo Info",
+			modal: false,
+	    });
+
+	    $( "#pinfo_button" ).click(function() {
+			$( "#photo_info" ).dialog( "open" );
+			slider_update_photo_info();
+	    });
+
+	    if (slider_settings.enable_captions) {
+			$( "#captions_box" ).change(function() {
+				slider_disable_captions = $('#captions_box').prop('checked');
+				var index = jssor_slider1.$CurrentIndex();
+				slider_update(jssor_slider1.$IsAutoPlaying(), true, index);
+			});
+	    } else {
+			$( "#captions_disable" ).hide();
+			$( "#captions_box" ).hide();
+	    }
+
+	    $('#gallery').keydown(function(e) {
+			var count = jssor_slider1.$SlidesCount() - 1;
+			var index = jssor_slider1.$CurrentIndex();
+
+			switch (e.which) {
+				case $.ui.keyCode.UP:
+					if ($.fullscreen.isNativelySupported()) {
+						if ($.fullscreen.isFullScreen()) {
+							$.fullscreen.exit();
+						} else {
+							slider_fullscreen();
+						}
+					}
+				break;
+				case $.ui.keyCode.DOWN:
+					if (jssor_slider1.$IsAutoPlaying()) {
+						jssor_slider1.$Pause();
+					} else {
+						jssor_slider1.$Play();
+					}
+				break;
+				case $.ui.keyCode.RIGHT:
+					if (index == count) {
+						slider_next();
+					} else {
+						slider_goto(index+1);
+					}
+				break;
+				case $.ui.keyCode.LEFT:
+					if (index == 0) {
+						slider_prev();
+					} else {
+						slider_goto(index-1);
+					}
+					break;
+				case $.ui.keyCode.SPACE:
+					if (jssor_slider1.$IsAutoPlaying()) {
+						jssor_slider1.$Pause();
+					} else {
+						if (index == count) {
+							slider_next();
+						} else {
+							slider_goto(index+1);
+						}
+					}
+				break;
+			}
+			e.preventDefault();
+	    });
+
+
 	    slider_create();
 
 	    //responsive code begin
@@ -253,9 +372,11 @@ define("jssor/gallery", function(require) {
 
 	function slider_update_ui() {
 		//console.log('update ui');
-	    if ($( "#map_container" ).dialog( "isOpen" )) {
-			slider_map_center();
-	    }
+		if (slider_settings.enable_google_maps) {
+			if ($( "#map_container" ).dialog( "isOpen" )) {
+				slider_map_center();
+			}
+		}
 
 	    if ($( "#photo_info" ).dialog( "isOpen" ) ) {
 			slider_update_photo_info();
@@ -354,7 +475,7 @@ define("jssor/gallery", function(require) {
 		$('#comments li.elgg-item-object-comment').each(function() {
 			var $c = $(this);
 			var $guid = $($c).attr('id').replace("elgg-object-","");
-			$c.find('.elgg-menu-item-delete').html("<span class=\"elgg-icon-delete elgg-icon\"></span>");
+			$c.find('.elgg-menu-item-delete').html("<span class=\"elgg-icon-delete elgg-icon fa fa-times\"></span>");
 			$c.find('.elgg-menu-item-delete span').click(function(event) {
 				var r = confirm(elgg.echo('deleteconfirm'));
 				if (r == true) {
@@ -420,7 +541,7 @@ define("jssor/gallery", function(require) {
 			success: function (output) {
 				$('#photo_canvas').html(output);
 				// photo delete
-				$('#photo_canvas li.elgg-menu-item-delete').html("<span class=\"elgg-icon-delete elgg-icon\"></span>");
+				$('#photo_canvas li.elgg-menu-item-delete').html("<span class=\"elgg-icon-delete elgg-icon fa fa-times\"></span>");
 				$('#photo_canvas li.elgg-menu-item-delete span').click(function(event) {
 					var r = confirm(elgg.echo('deleteconfirm'));
 					if (r == true) {
@@ -561,126 +682,6 @@ define("jssor/gallery", function(require) {
 		    update_map_markers();
 		}
 	}
-
-	$(function() {
-	    $( "#slider" ).slider({
-			range: "min",
-			min: 0,
-			max: slider_total - 1,
-			value: slider_offset,
-			slide: function( event, ui ) {
-				$( "#amount" ).val( ui.value );
-			},
-			stop: function(event, ui) {
-				slider_offset = ui.value;
-				slider_update(false);
-			}
-	    });
-	    $( "#total_photos" ).html( "/ " + slider_total );
-
-	    if (!$.fullscreen.isNativelySupported()) {
-			$("#fs_button").hide();
-	    }
-
-	    if (slider_settings.enable_google_maps) {
-			$( "#map_container" ).dialog({
-				autoOpen: false,
-				height: 460,
-				width: 530,
-				minHeight: 460,
-				minWidth: 530,
-				maxHeight: 480,
-				maxWidth: 640,
-				title: "Google Maps",
-			});
-
-			$( "#map_button" ).click(function() {
-				$( "#map_container" ).dialog( "open" );
-				initMap();
-				slider_map_center();
-			});
-	    } else {
-			$("#map_button").hide();
-	    }
-
-	    $( "#photo_info" ).dialog({
-			autoOpen: false,
-			height: 460,
-			width: 530,
-			minHeight: 460,
-			minWidth: 530,
-			maxHeight: 480,
-			maxWidth: 640,
-			title: "Photo Info",
-			modal: false,
-	    });
-
-	    $( "#pinfo_button" ).click(function() {
-			$( "#photo_info" ).dialog( "open" );
-			slider_update_photo_info();
-	    });
-
-	    if (slider_settings.enable_captions) {
-			$( "#captions_box" ).change(function() {
-				slider_disable_captions = $('#captions_box').prop('checked');
-				var index = jssor_slider1.$CurrentIndex();
-				slider_update(jssor_slider1.$IsAutoPlaying(), true, index);
-			});
-	    } else {
-			$( "#captions_disable" ).hide();
-			$( "#captions_box" ).hide();
-	    }
-
-	    $('#gallery').keydown(function(e) {
-			var count = jssor_slider1.$SlidesCount() - 1;
-			var index = jssor_slider1.$CurrentIndex();
-
-			switch (e.which) {
-				case $.ui.keyCode.UP:
-					if ($.fullscreen.isNativelySupported()) {
-						if ($.fullscreen.isFullScreen()) {
-							$.fullscreen.exit();
-						} else {
-							slider_fullscreen();
-						}
-					}
-				break;
-				case $.ui.keyCode.DOWN:
-					if (jssor_slider1.$IsAutoPlaying()) {
-						jssor_slider1.$Pause();
-					} else {
-						jssor_slider1.$Play();
-					}
-				break;
-				case $.ui.keyCode.RIGHT:
-					if (index == count) {
-						slider_next();
-					} else {
-						slider_goto(index+1);
-					}
-				break;
-				case $.ui.keyCode.LEFT:
-					if (index == 0) {
-						slider_prev();
-					} else {
-						slider_goto(index-1);
-					}
-					break;
-				case $.ui.keyCode.SPACE:
-					if (jssor_slider1.$IsAutoPlaying()) {
-						jssor_slider1.$Pause();
-					} else {
-						if (index == count) {
-							slider_next();
-						} else {
-							slider_goto(index+1);
-						}
-					}
-				break;
-			}
-			e.preventDefault();
-	    });
-	});
 
 	return {
 		play : function() {
