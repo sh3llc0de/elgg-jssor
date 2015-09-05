@@ -52,8 +52,8 @@ $limit = 10;
 
 $settings = elgg_get_plugin_from_id('jssor')->getAllSettings();
 $settings = [
-	'enable_captions' => elgg_extract('enable_captions', $settings),
-	'enable_google_maps' => elgg_extract('enable_google_maps', $settings),
+	'enable_captions' => elgg_extract('enable_captions', $settings, true),
+	'enable_google_maps' => elgg_extract('enable_google_maps', $settings, true),
 ];
 
 ?>
