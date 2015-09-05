@@ -2,7 +2,7 @@
 
 PKG_PATH=/tmp/jssor.out
 VER_MAJOR=1
-VER_MINOR=0
+VER_MINOR=1
 VER_REV=$(cat version.txt)
 
 if [[ -d "${PKG_PATH}" ]]; then
