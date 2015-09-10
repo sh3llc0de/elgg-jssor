@@ -73,6 +73,21 @@ require(['jssor/gallery'], function(g){
 *:focus {
     outline: none;
 }
+#fullscreen {
+	background: black;
+	text-align: center;
+}
+#controls {
+	color: white;
+	background: linear-gradient(#505050, #383838);
+	padding: 10px 0px 10px 0px;
+}
+#gallery {
+	margin: 0 auto;
+}
+.label {
+	color: #f6931f;
+}
 </style>
 
 <div id="fullscreen">
@@ -82,22 +97,23 @@ require(['jssor/gallery'], function(g){
 ?>
 </div> <!-- gallery -->
 <div id="controls">
-<?php echo elgg_echo("jssor:photos"); ?>:
-<input type="text" id="amount" readonly style="align:right; width:100px; border:0; color:#f6931f; font-weight:bold;">
-<span id="total_photos">/0</span> ::: <?php echo elgg_echo('jssor:captured'); ?>: <span id="photo_captured"></span>
-<div id="slider"></div>
+<span class='label'><?php echo elgg_echo("jssor:photos"); ?>:</span>
+<span id="amount" readonly style="color:Gold; font-weight:bold;"></span>
+<span id="total_photos">/0</span><span class='label'> ::: <?php echo elgg_echo('jssor:captured'); ?>:</span> <span id="photo_captured"></span>
+<div id="slider" style="margin: 5px 20px 7px 20px;"></div>
 <?php
-	echo elgg_view('input/button', array( 'onclick' => '_g.play()', 'class' => 'elgg-button-action', 'value' => elgg_echo("jssor:play")));
-	echo elgg_view('input/button', array( 'onclick' => '_g.pause()', 'class' => 'elgg-button-action', 'value' => elgg_echo("jssor:pause")));
-	echo elgg_view('input/button', array( 'onclick' => '_g.prev()', 'class' => 'elgg-button-action', 'value' => elgg_echo("jssor:prev")));
-	echo elgg_view('input/button', array( 'onclick' => '_g.next()', 'class' => 'elgg-button-action', 'value' => elgg_echo("jssor:next")));
+	echo elgg_view('input/button', array( 'id' => 'play_button', 'class' => 'elgg-button-action', 'value' => elgg_echo("jssor:play")));
+	echo elgg_view('input/button', array( 'id' => 'pause_button', 'class' => 'elgg-button-action', 'value' => elgg_echo("jssor:pause")));
+	echo elgg_view('input/button', array( 'id' => 'prev_button', 'class' => 'elgg-button-action', 'value' => elgg_echo("jssor:prev")));
+	echo elgg_view('input/button', array( 'id' => 'next_button', 'class' => 'elgg-button-action', 'value' => elgg_echo("jssor:next")));
 	echo elgg_view('input/button', array( 'id' => 'fs_button', 'class' => 'elgg-button-action', 'onclick' => '_g.fullscreen()', 'value' => elgg_echo("jssor:fullscreen")));
 	echo elgg_view('input/button', array( 'id' => 'map_button', 'class' => 'elgg-button-action', 'value' => elgg_echo("jssor:googlemaps")));
 	echo elgg_view('input/button', array( 'id' => 'pinfo_button', 'class' => 'elgg-button-action', 'value' => elgg_echo("jssor:photo:info")));
 ?>
-<input id="captions_box" type="checkbox" value='1'><span id="captions_disable"><?php echo elgg_echo("jssor:disable:captions"); ?></span>
-
+<input id="captions_box" type="checkbox" value='1'><span id="captions_disable" class="label"><?php echo elgg_echo("jssor:disable:captions"); ?></span>
 </div> <!-- controls -->
+</div> <!-- fullscreen -->
+
 <div id="map_container">
 <style>
       #map_canvas {
@@ -116,5 +132,5 @@ require(['jssor/gallery'], function(g){
 </style>
 <div id="photo_canvas"></div>
 </div> <!-- photo_info -->
-</div> <!-- fullscreen -->
+
 

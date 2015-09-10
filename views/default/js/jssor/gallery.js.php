@@ -228,7 +228,7 @@ define("jssor/gallery", function(require) {
 			max: slider_total - 1,
 			value: slider_offset,
 			slide: function( event, ui ) {
-				$( "#amount" ).val( ui.value );
+				$( "#amount" ).html( ui.value );
 			},
 			stop: function(event, ui) {
 				slider_offset = ui.value;
@@ -279,6 +279,22 @@ define("jssor/gallery", function(require) {
 			slider_update_photo_info();
 	    });
 
+		$( "#play_button" ).click(function() {
+			slider_play();
+		});
+
+		$( "#pause_button" ).click(function() {
+			slider_pause();
+		});
+
+		$( "#prev_button" ).click(function() {
+			slider_prev();
+		});
+
+		$( "#next_button" ).click(function() {
+			slider_next();
+		});
+
 	    if (slider_settings.enable_captions) {
 			$( "#captions_box" ).change(function() {
 				slider_disable_captions = $('#captions_box').prop('checked');
@@ -306,9 +322,9 @@ define("jssor/gallery", function(require) {
 				break;
 				case $.ui.keyCode.DOWN:
 					if (jssor_slider1.$IsAutoPlaying()) {
-						jssor_slider1.$Pause();
+						slider_pause();
 					} else {
-						jssor_slider1.$Play();
+						slider_play();
 					}
 				break;
 				case $.ui.keyCode.RIGHT:
@@ -340,34 +356,49 @@ define("jssor/gallery", function(require) {
 			e.preventDefault();
 	    });
 
-
 	    slider_create();
 
-	    //responsive code begin
-		//you can remove responsive code if you don't want the slider scales while window resizes
 		$(window).bind("load", slider_scale);
 		$(window).bind("resize", slider_scale);
 		$(window).bind("orientationchange", slider_scale);
-		//responsive code end
+		$(window).bind("fscreenclose", function() {
+			$('#gallery').css('padding', '0px 0px 0px 0px');
+			$( "#pinfo_button" ).show();
+			$( "#map_button" ).show();
+			$( "#fs_button" ).prop('value', elgg.echo('jssor:fullscreen'));
+		});
+
+		$( '#pause_button' ).hide();
+		if (slider_total <= slider_limit) {
+			$( '#prev_button' ).hide();
+			$( '#next_button' ).hide();
+		}
 	});
 
 	function slider_scale() {
-	    if (!$.fullscreen.isFullScreen()) {
-			var parentWidth = jssor_slider1.$Elmt.parentNode.clientWidth;
-			var width = Math.max(Math.min(parentWidth, 1920), 300);
+		var width = 0;
+		var height = 0;
+		var fullscreen = $.fullscreen.isFullScreen();
+	    if (!fullscreen) {
+			width = jssor_slider1.$Elmt.parentNode.clientWidth;
+			height = jssor_slider1.$Elmt.parentNode.clientHeight;
+		} else {
+			//width = screen.width;
+			height = screen.height;
+			height -= 105;
+		}
 
+		if (width || height) {
 			if (width)
-				jssor_slider1.$ScaleWidth(width);
-			else
-				window.setTimeout(ScaleSlider, 30);
-	    } else {
-			var width = document.body.clientWidth;
-			if (width)
-				jssor_slider1.$ScaleWidth(Math.max(Math.min(width, 1920), 300));
-			else
-				window.setTimeout(ScaleSlider, 30);
-
-	    }
+				jssor_slider1.$ScaleWidth(Math.max(Math.min(width, 5120), 300));
+			else {
+				jssor_slider1.$ScaleHeight(Math.max(Math.min(height, 2880), 300));
+				var padding = (screen.width - $(jssor_slider1.$Elmt).width()) / 2;
+				$('#gallery').css('padding', '0px 0px 0px ' + padding + 'px');
+			}
+		} else {
+			window.setTimeout(slider_scale, 30);
+		}
 	}
 
 	function slider_update_ui() {
@@ -384,7 +415,7 @@ define("jssor/gallery", function(require) {
 
 	    var cur_photo = slider_offset + jssor_slider1.$CurrentIndex() + 1;
 	    $( "#slider" ).slider( "value", slider_offset );
-	    $( "#amount" ).val( cur_photo );
+	    $( "#amount" ).html( cur_photo );
 	    $(".elgg-breadcrumbs li:last a").attr("href", slider_href + "&offset=" + slider_offset);
 
 	    var captured = slider_photo.attr("captured");
@@ -467,8 +498,27 @@ define("jssor/gallery", function(require) {
 			slider_update(false, true, -1);
 	}
 
+	function slider_play() {
+		jssor_slider1.$Play();
+		$( '#play_button' ).hide();
+		$( '#pause_button' ).show();
+	}
+
+	function slider_pause() {
+		jssor_slider1.$Pause();
+		$( '#play_button' ).show();
+		$( '#pause_button' ).hide();
+	}
+
 	function slider_fullscreen() {
-	    $('#fullscreen').fullscreen();
+		if ($.fullscreen.isFullScreen()) {
+			$.fullscreen.exit();
+		} else {
+			$('#fullscreen').fullscreen();
+			$( "#pinfo_button" ).hide();
+			$( "#map_button" ).hide();
+			$( "#fs_button" ).prop('value', elgg.echo('jssor:exit'));
+		}
 	}
 
 	function comments_set_delete() {
@@ -641,7 +691,7 @@ define("jssor/gallery", function(require) {
 				slider_markers.push(marker);
 			}
 	    }
-	    if (slider_markers && slider_markers.length) {
+	    if (!$.fullscreen.isFullScreen() && slider_markers && slider_markers.length) {
 			$("#map_button").show();
 	    } else {
 			$("#map_button").hide();
@@ -685,10 +735,10 @@ define("jssor/gallery", function(require) {
 
 	return {
 		play : function() {
-			jssor_slider1.$Play();
+			slider_play();
 		},
 		pause: function() {
-			jssor_slider1.$Pause();
+			slider_pause();
 		},
 		fullscreen: function() {
 			slider_fullscreen();
